@@ -122,6 +122,9 @@ object DeviceCalendarManager {
                     syncEventsForCalendar(context, deviceCalId, roomCalId, eventDao)
                 }
             }
+
+            // Reschedule reminders for newly synced events
+            com.kalendar.app.util.NotificationHelper.rescheduleAllUpcomingReminders(context)
         } catch (e: Exception) {
             Log.e(TAG, "Error syncing device calendars", e)
         }

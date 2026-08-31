@@ -32,8 +32,8 @@ import java.time.LocalDate
 object HeroImageManager {
 
     private const val TAG = "HeroImageManager"
-    // Pexels API key stub for open source repository. Replace with your own key from https://www.pexels.com/api/
-    private const val PEXELS_API_KEY = "YOUR_PEXELS_API_KEY_HERE"
+    // Pexels API key injected at build time via BuildConfig
+    private val PEXELS_API_KEY = com.kalendar.app.BuildConfig.PEXELS_API_KEY
     private const val PREFS_NAME = "kalendar_hero_images"
     private const val KEY_CACHE_PREFIX = "hero_img_"
 

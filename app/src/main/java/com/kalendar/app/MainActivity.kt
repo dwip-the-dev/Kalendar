@@ -21,6 +21,8 @@ import com.kalendar.app.ui.navigation.Routes
 import com.kalendar.app.ui.settings.SettingsViewModel
 import com.kalendar.app.ui.splash.SplashScreen
 import com.kalendar.app.ui.theme.KalendarTheme
+import com.kalendar.app.util.DynamicIconManager
+import com.kalendar.app.util.NotificationHelper
 import com.kalendar.app.widget.WidgetUpdateHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -70,6 +72,7 @@ class MainActivity : ComponentActivity() {
                     lifecycleScope.launch {
                         DeviceCalendarManager.syncDeviceCalendars(this@MainActivity)
                         WidgetUpdateHelper.updateAllWidgets(this@MainActivity)
+                        NotificationHelper.rescheduleAllUpcomingReminders(this@MainActivity)
                     }
                 }
             }
@@ -81,6 +84,7 @@ class MainActivity : ComponentActivity() {
                     lifecycleScope.launch {
                         DeviceCalendarManager.syncDeviceCalendars(this@MainActivity)
                         WidgetUpdateHelper.updateAllWidgets(this@MainActivity)
+                        NotificationHelper.rescheduleAllUpcomingReminders(this@MainActivity)
                     }
                 }
             }
@@ -105,6 +109,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Ensure dynamic app icon and widgets are always synchronized with current date
+        DynamicIconManager.updateAppIcon(this)
+        DynamicIconManager.scheduleDailyMidnightUpdate(this)
+        WidgetUpdateHelper.updateAllWidgets(this)
+        NotificationHelper.rescheduleAllUpcomingReminders(this)
     }
 
     override fun onNewIntent(intent: Intent) {

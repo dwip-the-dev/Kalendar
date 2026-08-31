@@ -3,6 +3,7 @@
 <div align="center">
 
 [![Android](https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://android.com)
+[![Version: v1.1](https://img.shields.io/badge/Version-v1.1-brightgreen.svg?style=for-the-badge)](https://github.com/dwip-the-dev/Kalendar/releases)
 [![Kotlin](https://img.shields.io/badge/Language-Kotlin%202.0-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Compose](https://img.shields.io/badge/UI-Jetpack%20Compose%20M3-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
 [![Skia](https://img.shields.io/badge/Engine-Skia%20GPU%20Canvas-FF5722?style=for-the-badge)](https://skia.org)

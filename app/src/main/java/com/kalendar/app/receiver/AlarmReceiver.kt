@@ -30,7 +30,7 @@ class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
 
-        // Handle dynamic icon update or date/timezone changes
+        // Handle dynamic icon update, date/timezone changes, or boot completed
         if (action == DynamicIconManager.ACTION_UPDATE_ICON ||
             action == Intent.ACTION_DATE_CHANGED ||
             action == Intent.ACTION_TIMEZONE_CHANGED ||
@@ -40,6 +40,7 @@ class AlarmReceiver : BroadcastReceiver() {
             DynamicIconManager.updateAppIcon(context)
             DynamicIconManager.scheduleDailyMidnightUpdate(context)
             WidgetUpdateHelper.updateAllWidgets(context)
+            NotificationHelper.rescheduleAllUpcomingReminders(context)
             return
         }
 
@@ -52,6 +53,8 @@ class AlarmReceiver : BroadcastReceiver() {
 
         val timeString = DateUtils.formatTime(startTime)
         val contentText = if (location.isNotBlank()) "$timeString • $location" else timeString
+
+        NotificationHelper.createNotificationChannel(context)
 
         val openAppIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP

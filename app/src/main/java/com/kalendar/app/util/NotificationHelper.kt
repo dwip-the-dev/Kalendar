@@ -9,17 +9,23 @@ import android.content.Intent
 import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.kalendar.app.MainActivity
 import com.kalendar.app.R
+import com.kalendar.app.data.local.KalendarDatabase
 import com.kalendar.app.data.local.entity.EventEntity
 import com.kalendar.app.receiver.AlarmReceiver
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Handles real Android system notifications, exact alarm scheduling, and instant reminder testing.
  */
 object NotificationHelper {
 
+    private const val TAG = "NotificationHelper"
     const val CHANNEL_ID = "kalendar_event_reminders_v2"
     const val CHANNEL_NAME = "Event Reminders"
 
@@ -47,7 +53,6 @@ object NotificationHelper {
                 val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 manager.createNotificationChannel(channel)
             } catch (e: Throwable) {
-                // Fallback channel creation without custom sound attributes if device doesn't support
                 try {
                     val fallbackChannel = NotificationChannel(
                         CHANNEL_ID,
@@ -65,14 +70,20 @@ object NotificationHelper {
         }
     }
 
+    /**
+     * Schedules an exact system alarm to notify the user of an event at its reminder offset.
+     */
     fun scheduleEventReminder(context: Context, event: EventEntity) {
         val reminderMinutes = event.reminder.toMinutes()
         if (event.reminder == com.kalendar.app.data.local.entity.ReminderTime.NONE) return
 
         val triggerTime = event.startTime - (reminderMinutes * 60 * 1000L)
-        if (triggerTime <= System.currentTimeMillis()) return
+        val now = System.currentTimeMillis()
+        if (triggerTime <= now) return
 
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        createNotificationChannel(context)
+
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
         val intent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra(AlarmReceiver.EXTRA_EVENT_ID, event.id)
             putExtra(AlarmReceiver.EXTRA_EVENT_TITLE, event.title)
@@ -111,12 +122,40 @@ object NotificationHelper {
                     pendingIntent
                 )
             }
+            Log.d(TAG, "Scheduled reminder for '${event.title}' at epoch $triggerTime")
         } catch (e: Exception) {
-            alarmManager.set(
-                AlarmManager.RTC_WAKEUP,
-                triggerTime,
-                pendingIntent
-            )
+            try {
+                alarmManager.set(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+                )
+            } catch (e2: Exception) {
+                Log.e(TAG, "Failed to schedule reminder for '${event.title}'", e2)
+            }
+        }
+    }
+
+    /**
+     * Reschedules reminders for all upcoming events in the next 30 days.
+     */
+    fun rescheduleAllUpcomingReminders(context: Context) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val now = System.currentTimeMillis()
+                val thirtyDaysLater = now + (30L * 24 * 60 * 60 * 1000L)
+                val db = KalendarDatabase.getInstance(context)
+                val upcomingEvents = db.eventDao().getEventsForTimeRangeOnce(now, thirtyDaysLater)
+
+                Log.d(TAG, "Rescheduling reminders for ${upcomingEvents.size} upcoming events")
+                for (event in upcomingEvents) {
+                    if (event.reminder != com.kalendar.app.data.local.entity.ReminderTime.NONE) {
+                        scheduleEventReminder(context, event)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error rescheduling upcoming reminders", e)
+            }
         }
     }
 

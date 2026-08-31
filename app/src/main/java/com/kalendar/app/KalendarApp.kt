@@ -3,10 +3,14 @@ package com.kalendar.app
 import android.app.Application
 import com.kalendar.app.data.local.KalendarDatabase
 import com.kalendar.app.data.sync.SyncWorker
+import com.kalendar.app.util.DynamicIconManager
+import com.kalendar.app.util.HeroImageManager
+import com.kalendar.app.util.NotificationHelper
+import com.kalendar.app.widget.WidgetUpdateHelper
 
 /**
  * Application class for Kalendar Calendar.
- * Initializes the Room database and schedules periodic sync.
+ * Initializes the Room database, notification channels, dynamic icons, and sync services.
  */
 class KalendarApp : Application() {
 
@@ -24,17 +28,20 @@ class KalendarApp : Application() {
         SyncWorker.schedule(this)
 
         // Initialize notification channel for reminders
-        com.kalendar.app.util.NotificationHelper.createNotificationChannel(this)
+        NotificationHelper.createNotificationChannel(this)
+
+        // Reschedule all upcoming event reminders
+        NotificationHelper.rescheduleAllUpcomingReminders(this)
 
         // Prefetch 3-day hero images for offline support
-        com.kalendar.app.util.HeroImageManager.prefetchRecentImages(this)
+        HeroImageManager.prefetchRecentImages(this)
 
         // Refresh all home screen widgets
-        com.kalendar.app.widget.WidgetUpdateHelper.updateAllWidgets(this)
+        WidgetUpdateHelper.updateAllWidgets(this)
 
         // Update 24-hour dynamic calendar app icon and schedule midnight refresh
-        com.kalendar.app.util.DynamicIconManager.updateAppIcon(this)
-        com.kalendar.app.util.DynamicIconManager.scheduleDailyMidnightUpdate(this)
+        DynamicIconManager.updateAppIcon(this)
+        DynamicIconManager.scheduleDailyMidnightUpdate(this)
     }
 
     companion object {

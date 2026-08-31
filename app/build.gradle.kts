@@ -1,8 +1,19 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+}
+
+// Load local.properties (which is in .gitignore and never committed)
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        load(FileInputStream(localPropertiesFile))
+    }
 }
 
 android {
@@ -14,10 +25,16 @@ android {
         applicationId = "com.kalendar.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Inject Pexels API key safely from local.properties or gradle property
+        val pexelsKey: String = (localProperties.getProperty("PEXELS_API_KEY")
+            ?: project.findProperty("PEXELS_API_KEY") as? String
+            ?: "YOUR_PEXELS_API_KEY_HERE")
+        buildConfigField("String", "PEXELS_API_KEY", "\"$pexelsKey\"")
 
         // Room schema export
         ksp {
@@ -52,6 +69,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
